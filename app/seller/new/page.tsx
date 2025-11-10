@@ -1,253 +1,212 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { ArrowLeft, Upload, X } from "lucide-react"
 import Link from "next/link"
-import { SiteHeader } from "@/components/site-header"
-import { SiteFooter } from "@/components/site-footer"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Checkbox } from "@/components/ui/checkbox"
-import { categories } from "@/lib/mock-data"
+import { ImageUpload } from "@/components/image-upload"
+import { SiteHeaderSimple } from "@/components/site-header-simple"
+import { supabase } from "@/lib/supabase"
 
 export default function NewListingPage() {
   const router = useRouter()
-  const [listingType, setListingType] = useState<"good" | "rental">("good")
+  const [listingType, setListingType] = useState<"sale" | "rent">("sale")
   const [images, setImages] = useState<string[]>([])
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    // Mock submission
-    router.push("/seller/dashboard")
+    setIsSubmitting(true)
+
+    try {
+      const formData = new FormData(e.target as HTMLFormElement)
+
+      const listingData = {
+        title: formData.get('title') as string,
+        price: parseFloat(formData.get('price') as string),
+        description: formData.get('description') as string,
+        type: listingType,
+        rental_period: listingType === 'rent' ? (formData.get('rental-period') as string) : null,
+        images: images,
+        seller_id: 'temp-seller-id', // Will be replaced with actual user ID when auth is added
+      }
+
+      const { data, error } = await supabase
+        .from('listings')
+        .insert([listingData])
+        .select()
+
+      if (error) {
+        console.error('Error creating listing:', error)
+        alert(`Error creating listing: ${error.message}`)
+        return
+      }
+
+      console.log('Listing created successfully:', data)
+      alert("Listing created successfully! 🎉")
+      router.push("/")
+    } catch (error) {
+      console.error('Error:', error)
+      alert("An error occurred. Please try again.")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <SiteHeader />
+    <div className="min-h-screen">
+      <SiteHeaderSimple showListButton={false} />
 
-      <main className="flex-1">
-        <div className="border-b border-border bg-card/50">
-          <div className="container py-8">
-            <Button variant="ghost" asChild className="mb-4">
-              <Link href="/seller/dashboard">
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Back to Dashboard
-              </Link>
-            </Button>
-            <h1 className="text-3xl font-bold tracking-tight mb-2">Create New Listing</h1>
-            <p className="text-muted-foreground">List an item for sale or rent in the marketplace</p>
-          </div>
+      <main className="container mx-auto px-4 lg:px-8 max-w-2xl py-8">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold mb-2">List an Item</h1>
+          <p className="text-muted-foreground">Quick and easy</p>
         </div>
 
-        <div className="container py-8">
-          <form onSubmit={handleSubmit} className="max-w-3xl mx-auto space-y-6">
-            {/* Listing Type */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Listing Type</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <RadioGroup value={listingType} onValueChange={(value) => setListingType(value as "good" | "rental")}>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="good" id="type-good" />
-                    <Label htmlFor="type-good" className="cursor-pointer">
-                      For Sale - One-time purchase
-                    </Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="rental" id="type-rental" />
-                    <Label htmlFor="type-rental" className="cursor-pointer">
-                      For Rent - Recurring rental
-                    </Label>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          {/* What are you listing? */}
+          <Card className="shadow-card">
+            <CardContent className="p-6 space-y-4">
+              <div>
+                <Label className="text-base font-semibold mb-3 block">What are you listing?</Label>
+                <RadioGroup value={listingType} onValueChange={(value) => setListingType(value as "sale" | "rent")}>
+                  <div className="flex gap-4">
+                    <label className="flex-1 cursor-pointer">
+                      <div className={`border-2 rounded-lg p-4 text-center transition-all ${
+                        listingType === 'sale'
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/50'
+                      }`}>
+                        <RadioGroupItem value="sale" id="type-sale" className="sr-only" />
+                        <div className="text-2xl mb-2">💰</div>
+                        <div className="font-semibold">For Sale</div>
+                        <div className="text-xs text-muted-foreground">One-time purchase</div>
+                      </div>
+                    </label>
+
+                    <label className="flex-1 cursor-pointer">
+                      <div className={`border-2 rounded-lg p-4 text-center transition-all ${
+                        listingType === 'rent'
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/50'
+                      }`}>
+                        <RadioGroupItem value="rent" id="type-rent" className="sr-only" />
+                        <div className="text-2xl mb-2">📦</div>
+                        <div className="font-semibold">For Rent</div>
+                        <div className="text-xs text-muted-foreground">Recurring rental</div>
+                      </div>
+                    </label>
                   </div>
                 </RadioGroup>
-              </CardContent>
-            </Card>
+              </div>
+            </CardContent>
+          </Card>
 
-            {/* Basic Information */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Basic Information</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div>
-                  <Label htmlFor="title">Title *</Label>
-                  <Input id="title" placeholder="e.g., Sleep Starter Pack" required />
-                </div>
+          {/* Title */}
+          <Card className="shadow-card">
+            <CardContent className="p-6">
+              <Label htmlFor="title" className="text-base font-semibold">What are you {listingType === 'sale' ? 'selling' : 'renting out'}?</Label>
+              <Input
+                id="title"
+                name="title"
+                placeholder="e.g., Mountain Bike, Monitor, Desk"
+                required
+                className="mt-2 text-base"
+              />
+            </CardContent>
+          </Card>
 
-                <div>
-                  <Label htmlFor="description">Description *</Label>
-                  <Textarea id="description" placeholder="Describe your item in detail..." rows={5} required />
-                </div>
+          {/* Price */}
+          <Card className="shadow-card">
+            <CardContent className="p-6">
+              <Label htmlFor="price" className="text-base font-semibold">
+                {listingType === 'sale' ? 'Price' : 'Rental Price'}
+              </Label>
+              <div className="relative mt-2">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-lg">$</span>
+                <Input
+                  id="price"
+                  name="price"
+                  type="number"
+                  step="0.01"
+                  className="pl-8 text-base"
+                  placeholder="0.00"
+                  required
+                />
+              </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <Label htmlFor="category">Category *</Label>
-                    <Select required>
-                      <SelectTrigger id="category">
-                        <SelectValue placeholder="Select category" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {categories.map((cat) => (
-                          <SelectItem key={cat.id} value={cat.id}>
-                            {cat.name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  <div>
-                    <Label htmlFor="condition">Condition *</Label>
-                    <Select required>
-                      <SelectTrigger id="condition">
-                        <SelectValue placeholder="Select condition" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="new">New</SelectItem>
-                        <SelectItem value="like-new">Like New</SelectItem>
-                        <SelectItem value="good">Good</SelectItem>
-                        <SelectItem value="fair">Fair</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Pricing */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Pricing</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <Label htmlFor="price">{listingType === "rental" ? "Rental Price *" : "Price *"}</Label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                      <Input id="price" type="number" step="0.01" className="pl-7" placeholder="0.00" required />
-                    </div>
-                  </div>
-
-                  {listingType === "rental" && (
-                    <>
-                      <div>
-                        <Label htmlFor="rental-period">Rental Period *</Label>
-                        <Select required>
-                          <SelectTrigger id="rental-period">
-                            <SelectValue placeholder="Select period" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="hourly">Hourly</SelectItem>
-                            <SelectItem value="daily">Daily</SelectItem>
-                            <SelectItem value="weekly">Weekly</SelectItem>
-                            <SelectItem value="monthly">Monthly</SelectItem>
-                          </SelectContent>
-                        </Select>
+              {listingType === 'rent' && (
+                <div className="mt-3">
+                  <Label htmlFor="rental-period" className="text-sm">Per</Label>
+                  <div className="flex gap-2 mt-2">
+                    <label className="flex-1 cursor-pointer">
+                      <input type="radio" name="rental-period" value="day" defaultChecked className="sr-only peer" />
+                      <div className="border-2 rounded-lg p-2 text-center text-sm peer-checked:border-primary peer-checked:bg-primary/5 hover:border-primary/50 transition-all">
+                        Day
                       </div>
-
-                      <div>
-                        <Label htmlFor="deposit">Security Deposit</Label>
-                        <div className="relative">
-                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground">$</span>
-                          <Input id="deposit" type="number" step="0.01" className="pl-7" placeholder="0.00" />
-                        </div>
+                    </label>
+                    <label className="flex-1 cursor-pointer">
+                      <input type="radio" name="rental-period" value="week" className="sr-only peer" />
+                      <div className="border-2 rounded-lg p-2 text-center text-sm peer-checked:border-primary peer-checked:bg-primary/5 hover:border-primary/50 transition-all">
+                        Week
                       </div>
-                    </>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Images */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Images</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="border-2 border-dashed border-border rounded-lg p-8 text-center hover:border-primary/50 transition-colors cursor-pointer">
-                    <Upload className="h-8 w-8 mx-auto mb-2 text-muted-foreground" />
-                    <p className="text-sm text-muted-foreground mb-1">Click to upload or drag and drop</p>
-                    <p className="text-xs text-muted-foreground">PNG, JPG up to 10MB</p>
+                    </label>
+                    <label className="flex-1 cursor-pointer">
+                      <input type="radio" name="rental-period" value="month" className="sr-only peer" />
+                      <div className="border-2 rounded-lg p-2 text-center text-sm peer-checked:border-primary peer-checked:bg-primary/5 hover:border-primary/50 transition-all">
+                        Month
+                      </div>
+                    </label>
                   </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
 
-                  {images.length > 0 && (
-                    <div className="grid grid-cols-3 gap-4">
-                      {images.map((image, index) => (
-                        <div key={index} className="relative aspect-square rounded-lg overflow-hidden bg-muted">
-                          <img
-                            src={image || "/placeholder.svg"}
-                            alt={`Upload ${index + 1}`}
-                            className="object-cover w-full h-full"
-                          />
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="icon"
-                            className="absolute top-2 right-2 h-6 w-6"
-                            onClick={() => setImages(images.filter((_, i) => i !== index))}
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </CardContent>
-            </Card>
+          {/* Photos */}
+          <Card className="shadow-card">
+            <CardContent className="p-6">
+              <Label className="text-base font-semibold mb-3 block">Add Photos</Label>
+              <ImageUpload
+                images={images}
+                onImagesChange={setImages}
+                maxImages={5}
+                maxSizeMB={10}
+              />
+            </CardContent>
+          </Card>
 
-            {/* Additional Options */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Additional Options</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="meetup" />
-                  <Label htmlFor="meetup" className="cursor-pointer">
-                    Available for local meetup
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="shipping" />
-                  <Label htmlFor="shipping" className="cursor-pointer">
-                    Willing to ship
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox id="negotiable" />
-                  <Label htmlFor="negotiable" className="cursor-pointer">
-                    Price negotiable
-                  </Label>
-                </div>
-              </CardContent>
-            </Card>
+          {/* Description */}
+          <Card className="shadow-card">
+            <CardContent className="p-6">
+              <Label htmlFor="description" className="text-base font-semibold">Description</Label>
+              <Textarea
+                id="description"
+                name="description"
+                placeholder="Condition, features, why you're selling..."
+                rows={4}
+                className="mt-2 text-base"
+                required
+              />
+            </CardContent>
+          </Card>
 
-            {/* Submit */}
-            <div className="flex gap-4">
-              <Button type="submit" size="lg" className="flex-1">
-                Publish Listing
-              </Button>
-              <Button type="button" variant="outline" size="lg" asChild>
-                <Link href="/seller/dashboard">Cancel</Link>
-              </Button>
-            </div>
-          </form>
-        </div>
+          {/* Submit */}
+          <div className="flex gap-3 pt-4">
+            <Button type="submit" size="lg" className="flex-1 text-base" disabled={isSubmitting}>
+              {isSubmitting ? "Publishing..." : "Publish Listing"}
+            </Button>
+            <Button type="button" variant="outline" size="lg" asChild>
+              <Link href="/">Cancel</Link>
+            </Button>
+          </div>
+        </form>
       </main>
-
-      <SiteFooter />
     </div>
   )
 }
