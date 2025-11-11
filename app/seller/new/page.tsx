@@ -65,7 +65,9 @@ export default function NewListingPage() {
       <main className="container mx-auto px-4 lg:px-8 max-w-2xl py-8">
         <div className="mb-6">
           <h1 className="text-3xl font-bold mb-2">List an Item</h1>
-          <p className="text-muted-foreground">Quick and easy</p>
+          <p className="text-muted-foreground">
+            Quick and easy • <span className="text-red-500">*</span> Required fields
+          </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -73,7 +75,9 @@ export default function NewListingPage() {
           <Card className="shadow-card">
             <CardContent className="p-6 space-y-4">
               <div>
-                <Label className="text-base font-semibold mb-3 block">What are you listing?</Label>
+                <Label className="text-base font-semibold mb-3 block">
+                  What are you listing? <span className="text-red-500">*</span>
+                </Label>
                 <RadioGroup value={listingType} onValueChange={(value) => setListingType(value as "sale" | "rent")}>
                   <div className="flex gap-4">
                     <label className="flex-1 cursor-pointer">
@@ -110,7 +114,9 @@ export default function NewListingPage() {
           {/* Title */}
           <Card className="shadow-card">
             <CardContent className="p-6">
-              <Label htmlFor="title" className="text-base font-semibold">What are you {listingType === 'sale' ? 'selling' : 'renting out'}?</Label>
+              <Label htmlFor="title" className="text-base font-semibold">
+                What are you {listingType === 'sale' ? 'selling' : 'renting out'}? <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="title"
                 name="title"
@@ -125,7 +131,7 @@ export default function NewListingPage() {
           <Card className="shadow-card">
             <CardContent className="p-6">
               <Label htmlFor="price" className="text-base font-semibold">
-                {listingType === 'sale' ? 'Price' : 'Rental Price'}
+                {listingType === 'sale' ? 'Price' : 'Rental Price'} <span className="text-red-500">*</span>
               </Label>
               <div className="relative mt-2">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-lg">$</span>
@@ -171,20 +177,27 @@ export default function NewListingPage() {
           {/* Photos */}
           <Card className="shadow-card">
             <CardContent className="p-6">
-              <Label className="text-base font-semibold mb-3 block">Add Photos</Label>
+              <Label className="text-base font-semibold mb-3 block">
+                Add Photos <span className="text-sm text-muted-foreground font-normal">(Optional)</span>
+              </Label>
               <ImageUpload
                 images={images}
                 onImagesChange={setImages}
                 maxImages={5}
                 maxSizeMB={10}
               />
+              <p className="text-xs text-muted-foreground mt-2">
+                Up to 5 photos, 10MB each. Listings with photos get more views!
+              </p>
             </CardContent>
           </Card>
 
           {/* Description */}
           <Card className="shadow-card">
             <CardContent className="p-6">
-              <Label htmlFor="description" className="text-base font-semibold">Description</Label>
+              <Label htmlFor="description" className="text-base font-semibold">
+                Description <span className="text-red-500">*</span>
+              </Label>
               <Textarea
                 id="description"
                 name="description"

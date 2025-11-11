@@ -76,7 +76,7 @@ export default function NewBusinessPage() {
         <div className="mb-6">
           <h1 className="text-3xl font-bold mb-2">Register Your Business</h1>
           <p className="text-muted-foreground">
-            Create a storefront to showcase your products and services
+            Create a storefront to showcase your products and services • <span className="text-red-500">*</span> Required fields
           </p>
         </div>
 
@@ -84,7 +84,9 @@ export default function NewBusinessPage() {
           {/* Business Name */}
           <Card className="shadow-card">
             <CardContent className="p-6">
-              <Label htmlFor="name" className="text-base font-semibold">Business Name *</Label>
+              <Label htmlFor="name" className="text-base font-semibold">
+                Business Name <span className="text-red-500">*</span>
+              </Label>
               <Input
                 id="name"
                 name="name"
@@ -98,7 +100,9 @@ export default function NewBusinessPage() {
           {/* Logo */}
           <Card className="shadow-card">
             <CardContent className="p-6">
-              <Label className="text-base font-semibold mb-3 block">Business Logo</Label>
+              <Label className="text-base font-semibold mb-3 block">
+                Business Logo <span className="text-sm text-muted-foreground font-normal">(Optional)</span>
+              </Label>
               <ImageUpload
                 images={logoUrl}
                 onImagesChange={setLogoUrl}
@@ -112,7 +116,9 @@ export default function NewBusinessPage() {
           {/* Banner */}
           <Card className="shadow-card">
             <CardContent className="p-6">
-              <Label className="text-base font-semibold mb-3 block">Banner Image</Label>
+              <Label className="text-base font-semibold mb-3 block">
+                Banner Image <span className="text-sm text-muted-foreground font-normal">(Optional)</span>
+              </Label>
               <ImageUpload
                 images={bannerUrl}
                 onImagesChange={setBannerUrl}
@@ -126,7 +132,9 @@ export default function NewBusinessPage() {
           {/* Category */}
           <Card className="shadow-card">
             <CardContent className="p-6">
-              <Label htmlFor="category" className="text-base font-semibold">Category</Label>
+              <Label htmlFor="category" className="text-base font-semibold">
+                Category <span className="text-sm text-muted-foreground font-normal">(Optional)</span>
+              </Label>
               <Input
                 id="category"
                 name="category"
@@ -139,7 +147,9 @@ export default function NewBusinessPage() {
           {/* Location */}
           <Card className="shadow-card">
             <CardContent className="p-6">
-              <Label htmlFor="location" className="text-base font-semibold">Location</Label>
+              <Label htmlFor="location" className="text-base font-semibold">
+                Location <span className="text-sm text-muted-foreground font-normal">(Optional)</span>
+              </Label>
               <Input
                 id="location"
                 name="location"
@@ -152,7 +162,9 @@ export default function NewBusinessPage() {
           {/* Website */}
           <Card className="shadow-card">
             <CardContent className="p-6">
-              <Label htmlFor="website" className="text-base font-semibold">Website</Label>
+              <Label htmlFor="website" className="text-base font-semibold">
+                Website <span className="text-sm text-muted-foreground font-normal">(Optional)</span>
+              </Label>
               <Input
                 id="website"
                 name="website"
@@ -166,7 +178,9 @@ export default function NewBusinessPage() {
           {/* Description */}
           <Card className="shadow-card">
             <CardContent className="p-6">
-              <Label htmlFor="description" className="text-base font-semibold">About Your Business</Label>
+              <Label htmlFor="description" className="text-base font-semibold">
+                About Your Business <span className="text-sm text-muted-foreground font-normal">(Optional)</span>
+              </Label>
               <Textarea
                 id="description"
                 name="description"
