@@ -1,6 +1,6 @@
 import { notFound } from "next/navigation"
 import { supabase } from "@/lib/supabase"
-import { ListingPageClient } from "@/components/listing-page-client"
+import { ListingPageSimple } from "@/components/listing-page-simple"
 
 export default async function ListingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -16,13 +16,8 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
     notFound()
   }
 
-  // Fetch related listings (same type, different listing)
-  const { data: relatedListings } = await supabase
-    .from('listings')
-    .select('*')
-    .eq('type', listing.type)
-    .neq('id', listing.id)
-    .limit(3)
+  // Increment view counter
+  await supabase.rpc('increment_listing_views', { listing_id: id })
 
-  return <ListingPageClient listing={listing} relatedListings={relatedListings || []} />
+  return <ListingPageSimple listing={listing} />
 }
