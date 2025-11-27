@@ -19,5 +19,12 @@ export default async function ListingPage({ params }: { params: Promise<{ id: st
   // Increment view counter
   await supabase.rpc('increment_listing_views', { listing_id: id })
 
-  return <ListingPageSimple listing={listing} />
+  // Fetch seller profile
+  const { data: sellerProfile } = await supabase
+    .from('profiles')
+    .select('*')
+    .eq('id', listing.seller_id)
+    .single()
+
+  return <ListingPageSimple listing={listing} sellerProfile={sellerProfile} />
 }

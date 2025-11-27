@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { Button } from "@/components/ui/button"
@@ -12,6 +12,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { ImageUpload } from "@/components/image-upload"
 import { SiteHeaderSimple } from "@/components/site-header-simple"
 import { supabase } from "@/lib/supabase"
+import { toast } from "sonner"
 
 const categories = [
   { value: 'for-sale', label: 'For Sale', emoji: '💰', subcategories: ['electronics', 'furniture', 'sports', 'clothing', 'other'] },
@@ -30,6 +31,25 @@ export default function NewListingPage() {
   const [rentalPeriod, setRentalPeriod] = useState<string>("day")
   const [images, setImages] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [sellerId, setSellerId] = useState<string>("")
+  const [referralCode, setReferralCode] = useState<string | null>(null)
+
+  useEffect(() => {
+    // 1. Get or create seller ID
+    let storedSellerId = localStorage.getItem('ns_seller_id')
+    if (!storedSellerId) {
+      storedSellerId = crypto.randomUUID()
+      localStorage.setItem('ns_seller_id', storedSellerId)
+    }
+    setSellerId(storedSellerId)
+
+    // 2. Check for referral code
+    const cookies = document.cookie.split(';')
+    const refCookie = cookies.find(c => c.trim().startsWith('ns_market_ref='))
+    if (refCookie) {
+      setReferralCode(refCookie.split('=')[1])
+    }
+  }, [])
 
   const selectedCategory = categories.find(c => c.value === category)
 
@@ -40,7 +60,7 @@ export default function NewListingPage() {
     try {
       // Validate at least one image
       if (images.length === 0) {
-        alert('Please add at least one photo of your item')
+        toast.error('Please add at least one photo of your item')
         setIsSubmitting(false)
         return
       }
@@ -50,6 +70,7 @@ export default function NewListingPage() {
       const listingData = {
         title: formData.get('title') as string,
         price: parseFloat(formData.get('price') as string) || 0,
+        quantity: parseInt(formData.get('quantity') as string) || 1,
         description: formData.get('description') as string,
         seller_name: formData.get('seller_name') as string,
         discord: formData.get('discord') as string || null,
@@ -59,7 +80,8 @@ export default function NewListingPage() {
         rental_period: listingType === 'rent' ? rentalPeriod : null,
         type: category as any, // Keep for backwards compatibility
         images: images,
-        seller_id: 'temp-seller-id', // Will be replaced with actual user ID when auth is added
+        seller_id: sellerId,
+        referral_code: referralCode,
         available: true,
         views: 0,
       }
@@ -71,16 +93,17 @@ export default function NewListingPage() {
 
       if (error) {
         console.error('Error creating listing:', error)
-        alert(`Error creating listing: ${error.message}`)
+        toast.error(`Error creating listing: ${error.message}`)
         return
       }
 
       console.log('Listing created successfully:', data)
-      alert("Listing posted! 🎉")
+      // Show success toast and redirect
+      toast.success("Listing posted successfully! 🎉")
       router.push("/")
     } catch (error) {
       console.error('Error:', error)
-      alert("An error occurred. Please try again.")
+      toast.error("An error occurred. Please try again.")
     } finally {
       setIsSubmitting(false)
     }
@@ -110,11 +133,10 @@ export default function NewListingPage() {
                   <div className="grid grid-cols-2 gap-3">
                     {categories.map((cat) => (
                       <label key={cat.value} className="cursor-pointer">
-                        <div className={`border-2 rounded-lg p-4 text-center transition-all ${
-                          category === cat.value
-                            ? 'border-primary bg-primary/5'
-                            : 'border-border hover:border-primary/50'
-                        }`}>
+                        <div className={`border-2 rounded-lg p-4 text-center transition-all ${category === cat.value
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/50'
+                          }`}>
                           <RadioGroupItem value={cat.value} className="sr-only" />
                           <div className="text-2xl mb-2">{cat.emoji}</div>
                           <div className="font-semibold">{cat.label}</div>
@@ -135,11 +157,10 @@ export default function NewListingPage() {
                     <div className="grid grid-cols-2 gap-2">
                       {selectedCategory.subcategories.map((sub) => (
                         <label key={sub} className="cursor-pointer">
-                          <div className={`border rounded-lg p-2 text-center text-sm transition-all ${
-                            subcategory === sub
-                              ? 'border-primary bg-primary/5'
-                              : 'border-border hover:border-primary/50'
-                          }`}>
+                          <div className={`border rounded-lg p-2 text-center text-sm transition-all ${subcategory === sub
+                            ? 'border-primary bg-primary/5'
+                            : 'border-border hover:border-primary/50'
+                            }`}>
                             <RadioGroupItem value={sub} className="sr-only" />
                             <div className="capitalize">{sub}</div>
                           </div>
@@ -163,11 +184,10 @@ export default function NewListingPage() {
                   <RadioGroup value={listingType} onValueChange={(value) => setListingType(value as "sale" | "rent")}>
                     <div className="flex gap-3">
                       <label className="flex-1 cursor-pointer">
-                        <div className={`border-2 rounded-lg p-4 text-center transition-all ${
-                          listingType === 'sale'
-                            ? 'border-primary bg-primary/5'
-                            : 'border-border hover:border-primary/50'
-                        }`}>
+                        <div className={`border-2 rounded-lg p-4 text-center transition-all ${listingType === 'sale'
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/50'
+                          }`}>
                           <RadioGroupItem value="sale" className="sr-only" />
                           <div className="text-2xl mb-2">💵</div>
                           <div className="font-semibold">For Sale</div>
@@ -176,11 +196,10 @@ export default function NewListingPage() {
                       </label>
 
                       <label className="flex-1 cursor-pointer">
-                        <div className={`border-2 rounded-lg p-4 text-center transition-all ${
-                          listingType === 'rent'
-                            ? 'border-primary bg-primary/5'
-                            : 'border-border hover:border-primary/50'
-                        }`}>
+                        <div className={`border-2 rounded-lg p-4 text-center transition-all ${listingType === 'rent'
+                          ? 'border-primary bg-primary/5'
+                          : 'border-border hover:border-primary/50'
+                          }`}>
                           <RadioGroupItem value="rent" className="sr-only" />
                           <div className="text-2xl mb-2">🔄</div>
                           <div className="font-semibold">For Rent</div>
@@ -201,11 +220,10 @@ export default function NewListingPage() {
                       <div className="grid grid-cols-4 gap-2">
                         {['hour', 'day', 'week', 'month'].map((period) => (
                           <label key={period} className="cursor-pointer">
-                            <div className={`border rounded-lg p-2 text-center text-sm transition-all ${
-                              rentalPeriod === period
-                                ? 'border-primary bg-primary/5'
-                                : 'border-border hover:border-primary/50'
-                            }`}>
+                            <div className={`border rounded-lg p-2 text-center text-sm transition-all ${rentalPeriod === period
+                              ? 'border-primary bg-primary/5'
+                              : 'border-border hover:border-primary/50'
+                              }`}>
                               <RadioGroupItem value={period} className="sr-only" />
                               <div className="capitalize">{period}</div>
                             </div>
@@ -235,38 +253,54 @@ export default function NewListingPage() {
             </CardContent>
           </Card>
 
-          {/* Price */}
-          <Card className="shadow-card">
-            <CardContent className="p-6">
-              <Label htmlFor="price" className="text-base font-semibold">
-                {category === 'for-sale' && listingType === 'rent'
-                  ? `Price per ${rentalPeriod}`
-                  : 'Price'
-                } <span className="text-red-500">*</span>
-              </Label>
-              <div className="relative mt-2">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-lg">$</span>
+          {/* Price & Quantity */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <Card className="shadow-card">
+              <CardContent className="p-6">
+                <Label htmlFor="price" className="text-base font-semibold">
+                  {category === 'for-sale' && listingType === 'rent'
+                    ? `Price per ${rentalPeriod}`
+                    : 'Price'
+                  } <span className="text-red-500">*</span>
+                </Label>
+                <div className="relative mt-2">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground text-lg">$</span>
+                  <Input
+                    id="price"
+                    name="price"
+                    type="number"
+                    step="0.01"
+                    className="pl-8 text-base"
+                    placeholder={category === 'for-sale' && listingType === 'rent'
+                      ? `e.g., 10 per ${rentalPeriod}`
+                      : "0 for free, or enter amount"
+                    }
+                    required
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="shadow-card">
+              <CardContent className="p-6">
+                <Label htmlFor="quantity" className="text-base font-semibold">
+                  Quantity <span className="text-red-500">*</span>
+                </Label>
                 <Input
-                  id="price"
-                  name="price"
+                  id="quantity"
+                  name="quantity"
                   type="number"
-                  step="0.01"
-                  className="pl-8 text-base"
-                  placeholder={category === 'for-sale' && listingType === 'rent'
-                    ? `e.g., 10 per ${rentalPeriod}`
-                    : "0 for free, or enter amount"
-                  }
+                  min="1"
+                  defaultValue="1"
+                  className="mt-2 text-base"
                   required
                 />
-              </div>
-              <p className="text-xs text-muted-foreground mt-2">
-                {category === 'for-sale' && listingType === 'rent'
-                  ? `Enter rental price per ${rentalPeriod}`
-                  : 'Enter 0 for free items'
-                }
-              </p>
-            </CardContent>
-          </Card>
+                <p className="text-xs text-muted-foreground mt-2">
+                  How many items do you have available?
+                </p>
+              </CardContent>
+            </Card>
+          </div>
 
           {/* Photos */}
           <Card className="shadow-card">

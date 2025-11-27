@@ -35,6 +35,8 @@ export interface Listing {
   available: boolean
   views: number
   business_id?: string // Keep for now, will remove later
+  referral_code?: string
+  quantity?: number
   created_at: string
   updated_at: string
 }

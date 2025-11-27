@@ -3,6 +3,7 @@ import type { Metadata } from "next"
 import { Inter } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
+import { Toaster } from "sonner"
 import "./globals.css"
 
 const inter = Inter({
@@ -12,17 +13,9 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: "🏪 NS Market - Network School Marketplace",
+  title: "nsmarket.app",
   description: "Buy, sell, and rent goods within the Network School community. Your local marketplace for NS.com members.",
   generator: "v0.app",
-  icons: {
-    icon: [
-      {
-        url: "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏪</text></svg>",
-        type: "image/svg+xml",
-      },
-    ],
-  },
 }
 
 export default function RootLayout({
@@ -34,6 +27,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} font-sans antialiased`}>
         <Suspense fallback={null}>{children}</Suspense>
+        <Toaster position="top-center" richColors />
         <Analytics />
       </body>
     </html>

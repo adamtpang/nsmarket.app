@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { AuthButton } from "@/components/auth-button"
 
 interface SiteHeaderProps {
   showListButton?: boolean
@@ -15,16 +16,43 @@ export function SiteHeaderSimple({ showListButton = true }: SiteHeaderProps) {
             <Link href="/" className="text-2xl font-bold text-primary hover:opacity-80 transition-opacity">
               🏪 nsmarket.app
             </Link>
+
+            {/* Buy / Sell Toggle */}
+            <div className="hidden md:flex items-center bg-muted/50 p-1 rounded-full border">
+              <Link
+                href="/"
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${!showListButton ? 'text-muted-foreground hover:text-foreground' : 'bg-background shadow-sm text-foreground'
+                  }`}
+              >
+                Buy
+              </Link>
+              <Link
+                href="/dashboard"
+                className={`px-4 py-1.5 rounded-full text-sm font-medium transition-all ${showListButton ? 'text-muted-foreground hover:text-foreground' : 'bg-background shadow-sm text-foreground'
+                  }`}
+              >
+                Sell
+              </Link>
+            </div>
           </div>
 
-          {showListButton && (
-            <Button asChild>
-              <Link href="/seller/new">
-                <Plus className="mr-2 h-4 w-4" />
-                Post Listing
-              </Link>
+          <div className="flex items-center gap-4">
+            <Button variant="ghost" asChild className="md:hidden">
+              <Link href="/dashboard">Sell</Link>
             </Button>
-          )}
+
+            {showListButton && (
+              <div className="flex items-center gap-2">
+                <Button asChild variant="outline" className="hidden sm:flex">
+                  <Link href="/seller/new">
+                    <Plus className="mr-2 h-4 w-4" />
+                    Post
+                  </Link>
+                </Button>
+                <AuthButton />
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </header>

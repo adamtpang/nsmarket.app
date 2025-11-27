@@ -10,9 +10,10 @@ import type { Listing } from "@/lib/supabase"
 
 interface ListingPageProps {
   listing: Listing
+  sellerProfile?: any
 }
 
-export function ListingPageSimple({ listing }: ListingPageProps) {
+export function ListingPageSimple({ listing, sellerProfile }: ListingPageProps) {
   const formatPrice = (price: number | null) => {
     if (price === null || price === 0) return 'Free'
     if (price < 0) return 'Negotiable'
@@ -20,7 +21,10 @@ export function ListingPageSimple({ listing }: ListingPageProps) {
   }
 
   const handleDiscordContact = () => {
-    if (!listing.discord) {
+    // Use profile username if available, otherwise fallback to listing contact
+    const discordHandle = sellerProfile?.username || listing.discord
+
+    if (!discordHandle) {
       alert('No Discord contact provided')
       return
     }
@@ -28,12 +32,24 @@ export function ListingPageSimple({ listing }: ListingPageProps) {
     // Open Discord with pre-filled message
     const message = encodeURIComponent(`Hi! I'm interested in your listing: ${listing.title}`)
 
-    // If it's a user ID (numeric), use different format
-    if (listing.discord.match(/^\d+$/)) {
-      window.open(`https://discord.com/users/${listing.discord}`, '_blank')
+    // Try to open Discord app first (deep link), then fallback to web
+    if (discordHandle.match(/^\d+$/)) {
+      // User ID: Open profile directly
+      // discord://users/ID works on mobile/desktop app
+      window.location.href = `discord://users/${discordHandle}`
+
+      // Fallback for web (set timeout to allow app to open)
+      setTimeout(() => {
+        window.open(`https://discord.com/users/${discordHandle}`, '_blank')
+      }, 500)
     } else {
-      // It's a username, show it to user
-      alert(`Contact seller on Discord: ${listing.discord}\n\nSend them a DM about "${listing.title}"`)
+      // Username: Copy to clipboard and open Discord
+      navigator.clipboard.writeText(discordHandle)
+      alert(`Copied "${discordHandle}" to clipboard! Opening Discord...`)
+      window.location.href = "discord://"
+      setTimeout(() => {
+        window.open("https://discord.com/app", '_blank')
+      }, 500)
     }
   }
 
@@ -72,7 +88,14 @@ export function ListingPageSimple({ listing }: ListingPageProps) {
             {/* Title and Price */}
             <div>
               <h1 className="text-3xl font-bold mb-2">{listing.title}</h1>
-              <div className="text-3xl font-bold text-primary">{formatPrice(listing.price)}</div>
+              <div className="flex items-end gap-4">
+                <div className="text-3xl font-bold text-primary">{formatPrice(listing.price)}</div>
+                {listing.quantity !== undefined && (
+                  <div className="text-sm text-muted-foreground mb-1">
+                    {listing.quantity > 0 ? `${listing.quantity} available` : 'Out of stock'}
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Photos */}
@@ -139,29 +162,34 @@ export function ListingPageSimple({ listing }: ListingPageProps) {
             <Card>
               <CardContent className="p-6">
                 <h2 className="font-semibold mb-4">Posted by</h2>
-                <div className="mb-4">
-                  <div className="font-medium">{listing.seller_name}</div>
-                  <div className="text-sm text-muted-foreground mt-2 space-y-1">
-                    {listing.discord && (
-                      <div>Discord: {listing.discord}</div>
+                <div className="mb-6 flex items-center gap-4">
+                  <img
+                    src={sellerProfile?.avatar_url || `https://api.dicebear.com/7.x/initials/svg?seed=${listing.seller_name}`}
+                    alt={listing.seller_name}
+                    className="w-12 h-12 rounded-full bg-muted"
+                  />
+                  <div>
+                    <div className="font-medium">{sellerProfile?.full_name || listing.seller_name}</div>
+                    {sellerProfile?.username && (
+                      <div className="text-sm text-muted-foreground">@{sellerProfile.username}</div>
                     )}
-                    {listing.whatsapp && (
-                      <div>WhatsApp: {listing.whatsapp}</div>
+                    {/* Fallback if no profile but listing has discord */}
+                    {!sellerProfile?.username && listing.discord && (
+                      <div className="text-sm text-muted-foreground">Discord: {listing.discord}</div>
                     )}
                   </div>
                 </div>
 
                 {listing.available ? (
                   <div className="space-y-2">
-                    {listing.discord && (
-                      <Button
-                        className="w-full"
-                        size="lg"
-                        onClick={handleDiscordContact}
-                      >
-                        <MessageCircle className="mr-2 h-4 w-4" />
-                        Contact on Discord
-                      </Button>
+                    <Button
+                      className="w-full"
+                      size="lg"
+                      onClick={handleDiscordContact}
+                    >
+                      <MessageCircle className="mr-2 h-4 w-4" />
+                      Contact on Discord
+                    </Button>
                     )}
                     {listing.whatsapp && (
                       <Button
