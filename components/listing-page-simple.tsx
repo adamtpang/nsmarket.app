@@ -190,7 +190,6 @@ export function ListingPageSimple({ listing, sellerProfile }: ListingPageProps) 
                       <MessageCircle className="mr-2 h-4 w-4" />
                       Contact on Discord
                     </Button>
-                    )}
                     {listing.whatsapp && (
                       <Button
                         className="w-full"
