@@ -28,6 +28,7 @@ CREATE INDEX IF NOT EXISTS idx_businesses_featured ON businesses(is_featured);
 CREATE INDEX IF NOT EXISTS idx_listings_business_id ON listings(business_id);
 
 -- Update trigger for businesses
+DROP TRIGGER IF EXISTS update_businesses_updated_at ON businesses;
 CREATE TRIGGER update_businesses_updated_at
   BEFORE UPDATE ON businesses
   FOR EACH ROW
@@ -37,6 +38,12 @@ CREATE TRIGGER update_businesses_updated_at
 ALTER TABLE businesses ENABLE ROW LEVEL SECURITY;
 
 -- RLS Policies for businesses
+-- Drop existing policies first to be idempotent
+DROP POLICY IF EXISTS "Anyone can view businesses" ON businesses;
+DROP POLICY IF EXISTS "Anyone can create businesses" ON businesses;
+DROP POLICY IF EXISTS "Owners can update their own businesses" ON businesses;
+DROP POLICY IF EXISTS "Owners can delete their own businesses" ON businesses;
+
 CREATE POLICY "Anyone can view businesses"
   ON businesses
   FOR SELECT

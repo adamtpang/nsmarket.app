@@ -32,6 +32,8 @@ export default function NewListingPage() {
   const [images, setImages] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [sellerId, setSellerId] = useState<string>("")
+  const [businesses, setBusinesses] = useState<any[]>([])
+  const [selectedBusinessId, setSelectedBusinessId] = useState<string | null>(null)
   const [referralCode, setReferralCode] = useState<string | null>(null)
 
   useEffect(() => {
@@ -42,6 +44,21 @@ export default function NewListingPage() {
       localStorage.setItem('ns_seller_id', storedSellerId)
     }
     setSellerId(storedSellerId)
+
+    // 1.5 Fetch businesses owned by this seller
+    const fetchBusinesses = async () => {
+      const { data } = await supabase
+        .from('businesses')
+        .select('id, name')
+        .eq('owner_id', storedSellerId)
+
+      if (data && data.length > 0) {
+        setBusinesses(data)
+        // Default to first business? Or let them choose?
+        // Let's defaulted to "Individual" (null) unless they pick one, or maybe alert them.
+      }
+    }
+    fetchBusinesses()
 
     // 2. Check for referral code
     const cookies = document.cookie.split(';')
@@ -81,6 +98,7 @@ export default function NewListingPage() {
         type: category as any, // Keep for backwards compatibility
         images: images,
         seller_id: sellerId,
+        business_id: selectedBusinessId, // Link to business if selected
         referral_code: referralCode,
         available: true,
         views: 0,
@@ -120,6 +138,38 @@ export default function NewListingPage() {
             Quick and easy • <span className="text-red-500">*</span> Required fields
           </p>
         </div>
+
+        {businesses.length > 0 && (
+          <Card className="mb-6 border-primary/20 shadow-sm bg-primary/5">
+            <CardContent className="p-4 flex items-center justify-between">
+              <div>
+                <h3 className="font-semibold text-foreground">Posting on behalf of a Store?</h3>
+                <p className="text-sm text-muted-foreground">Link this listing to one of your businesses.</p>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant={selectedBusinessId === null ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setSelectedBusinessId(null)}
+                >
+                  Individual
+                </Button>
+                {businesses.map(b => (
+                  <Button
+                    key={b.id}
+                    type="button"
+                    variant={selectedBusinessId === b.id ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => setSelectedBusinessId(b.id)}
+                  >
+                    {b.name}
+                  </Button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Category */}

@@ -41,6 +41,10 @@ export function AuthButton() {
             options: {
                 redirectTo: `${window.location.origin}/auth/callback`,
                 scopes: 'identify email guilds',
+                queryParams: {
+                    access_type: 'offline',
+                    prompt: 'consent',
+                },
             },
         })
     }
